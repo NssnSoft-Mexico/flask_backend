@@ -1,8 +1,9 @@
 import jwt
 
 from markupsafe import escape
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, abort
 from functools import wraps
+from flask import session
 
 app = Flask(__name__)
 secret_key = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWUsImlhdCI6MTUxNjIzOTAyMn0.KMUFsIDTnFmyG3nMiGM6H9FNFUROf3wh7SmqJp-QV30"
@@ -14,10 +15,6 @@ secret_keya = "secret"
 def hello_world():  # put application's code here
     name = request.args.get("name", "Flask")
     return f"Hello, {escape(name)}!"
-
-@app.route('/login')
-def Tst():
-    return f"Hello login!"
 
 @app.route('/post/<int:post_id>')
 def show_post(post_id):
@@ -61,8 +58,22 @@ def verify_token(func):
             return jsonify({'message': 'Invalid token'}), 403
     return wrapper
 
+def role_permission(*required_roles):
+   def wrapper(f):
+       @wraps(f)
+       def decorated_function(*args, **kwargs):
+           users = {"ADMIN", "EDITOR" , "DEV"}
+           user_roles = session.get('user', {}).get('roles', '')
+           for role in users:
+               if role not in user_roles.split(','):
+                   return "No tienes permiso para realizar esta operación", 401
+           return f(*args, **kwargs)
+       return decorated_function
+   return wrapper
+
 @app.route('/protected', methods=['GET'])
 @verify_token
+@role_permission('ADMINS')
 def protected():
     return jsonify({'message': 'You have access'}), 200
 
