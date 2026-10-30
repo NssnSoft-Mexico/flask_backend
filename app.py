@@ -2,42 +2,13 @@ import jwt
 
 from markupsafe import escape
 from flask import Flask, request, jsonify
+from functools import wraps
 
 app = Flask(__name__)
 secret_key = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWUsImlhdCI6MTUxNjIzOTAyMn0.KMUFsIDTnFmyG3nMiGM6H9FNFUROf3wh7SmqJp-QV30"
+ALGORITHM = "HS256"
 
-def buat_token(user_id):
-    payload = {'user_id': user_id}
-    token = jwt.encode(payload, app.config['SECRET_KEY'], algorithm='HS256')
-    return token
-
-def validasi_token(token):
-    try:
-        payload = jwt.decode(token, app.config['SECRET_KEY'], algorithms=['HS256'])
-        return payload
-    except jwt.ExpiredSignatureError:
-        return 'Token Expired'
-    except jwt.InvalidTokenError:
-        return 'Invalid Token'
-
-@app.route('/protected')
-def protected():
-    token = request.headers.get('Authorization')
-    if not token:
-        return jsonify({'message': 'Token dibutuhkan'}), 401
-
-    try:
-      token = token.split(" ")[1]
-    except:
-      return jsonify({'message': 'Format token salah'}), 401
-
-    hasil_validasi = validasi_token(token)
-    if hasil_validasi == 'Token Expired':
-        return jsonify({'message': 'Token Expired'}), 401
-    elif hasil_validasi == 'Invalid Token':
-        return jsonify({'message': 'Invalid Token'}), 401
-    else:
-        return jsonify({'message': 'Akses diizinkan', 'user_id': hasil_validasi['user_id']}), 200
+secret_keya = "secret"
 
 @app.route('/')
 def hello_world():  # put application's code here
@@ -81,6 +52,7 @@ def verify_token(func):
         token = token_parts[1]
         try:
             payload = jwt.decode(token, secret_key, algorithms=['HS256'])
+            print(payload)
             request.username = payload['username']
             return func(*args, **kwargs)
         except jwt.ExpiredSignatureError:
@@ -100,4 +72,4 @@ def show_subpath(subpath):
     return f'Subpath {escape(subpath)}'
 
 if __name__ == '__main__':
-    app.run()
+    app.run(host='0.0.0.0', port=5000, debug=True)
