@@ -30,6 +30,7 @@ def login():
         if username is None or password is None:
             return jsonify({'message': 'Both username and password are required'}), 400
         if username == "admin" and password == "123":
+            # Creo que aqui debemos tener control sobre los roles para cuando hagamos llamado al endpoint sepamo si tiene permisos y enviarlo desde el front
             token = jwt.encode({'username': username}, secret_key, algorithm='HS256')
             return jsonify({'token': token}), 200
 
@@ -71,11 +72,32 @@ def role_permission(*required_roles):
        return decorated_function
    return wrapper
 
+# Example for all endpoint to use permissions and tokens
 @app.route('/protected', methods=['GET'])
 @verify_token
 @role_permission('ADMINS')
 def protected():
     return jsonify({'message': 'You have access'}), 200
+
+# Endpoint para obtener el stock de equipos vamos a poder obtener registros de acuerdo al estatus del equipo
+@app.route('/obtenerstock>', methods=['GET'])
+@verify_token
+
+# Endpoint de consulta de usuarios en el sistema
+@@app.route('/obtenerusuarios>', methods=['GET'])
+@verify_token
+
+# Endpoint de consulta de clientes y vamos a obtenerlos de acuerdo a los estatus de cada cliente
+@app.route('/obtenerclientes>', methods=['GET'])
+@verify_token
+
+# Endpoint de consulta de licencias activas / por vencer
+@app.route('/obtenerlicencias>', methods=['GET'])
+@verify_token
+
+# Endpoint de consulta nuevos prospectos
+@app.route('/obtenercambaceo>', methods=['GET'])
+@verify_token
 
 @app.route('/path/<path:subpath>')
 def show_subpath(subpath):
